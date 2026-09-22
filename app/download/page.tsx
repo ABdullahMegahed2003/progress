@@ -63,8 +63,8 @@ export default function DownloadLandingPage() {
               </div>
             </a>
 
-            <Link href="/" className="btn-secondary-glass lg">
-              <span>تجربة النسخة الفورية</span>
+            <Link href="/app" className="btn-secondary-glass lg">
+              <span>تجربة التطبيق أونلاين</span>
               <ChevronLeft size={18} />
             </Link>
           </div>
