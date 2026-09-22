@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GYM
 
-## Getting Started
+تطبيق لإدارة التمرين ومتابعة التقدم اليومي. يساعد المستخدم على اختيار نظام تدريبي، تجهيز تمارين كل يوم، تسجيل الوزن والعدات والمجموعات، ثم مقارنة الأداء بين الأيام والأسابيع والشهور.
 
-First, run the development server:
+## ماذا يفعل التطبيق؟
+
+- اختيار أنظمة Push Pull Legs وArnold Split وUpper / Lower وFull Body.
+- تجهيز تمارين كل يوم داخل النظام.
+- اقتراح تمارين من ExerciseDB حسب عضلات اليوم، مع ترجمة الأسماء والعضلات للعربية.
+- إضافة تمرين يدوي أو تعديل أو حذف تمرين.
+- حفظ النظام والتمارين في MongoDB.
+- تسجيل كل مجموعة مع الوزن والعدات وحالة التنفيذ.
+- تسجيل يوم الراحة أو اليوم الذي لم يتم فيه التمرين.
+- تسجيل النوم والطاقة والشغل والمجهود والوجبات ووقت التمرين والملاحظات.
+- ربط سجل اليوم بأداء التمرين في نفس التاريخ.
+- حساب الحجم التدريبي والمجموعات والعدات المكتملة.
+- مقارنة الأداء بين الأسبوع الحالي والسابق، وبين الشهر الحالي والسابق.
+- عرض أقل يوم أداءً والتقدم حسب كل تمرين.
+- تحليل شهري للعوامل المحتملة وراء التطور أو التراجع، مثل النوم والطاقة وعدد الوجبات والمجهود.
+- حفظ تسجيل الدخول داخل Token آمن طويل المدة.
+
+## الصفحات
+
+### الرئيسية `/`
+
+واجهة التطبيق الأساسية، ومنها يمكن الوصول إلى لوحة التمرين، سجل اليوم، الأنظمة، التقدم، والحساب.
+
+### إعداد النظام `/training-plan?system=Arnold%20Split`
+
+صفحة إعداد النظام والتمارين فقط:
+
+- اختيار تمارين كل يوم.
+- إضافة تمرين يدويًا.
+- اختيار تمرين مقترح حسب عضلات اليوم.
+- تعديل أو حذف التمارين.
+- حفظ النظام والتمارين في MongoDB.
+
+### تماريني `/training-plan?system=Arnold%20Split&mode=log`
+
+صفحة تسجيل أداء التمرين:
+
+- اختيار يوم الأسبوع.
+- الانتقال بين الأسابيع والتواريخ.
+- تسجيل الوزن والعدات لكل مجموعة.
+- تحديد المجموعة كمكتملة.
+- إضافة مجموعة جديدة.
+- تحديد تمرين لم يتم أو اليوم راحة.
+- عرض نسبة إنجاز تمرين اليوم.
+- حفظ أداء اليوم في قاعدة البيانات.
+
+### سجل يومك `/daily-log`
+
+صفحة تسجيل العوامل اليومية المرتبطة بالأداء:
+
+- عدد ساعات النوم والطاقة.
+- الشغل وعدد ساعاته ومستوى المجهود.
+- الوجبات بالترتيب مع وقت كل وجبة ومحتواها.
+- وقت التمرين والملاحظات والأحداث الجديدة.
+- عرض تمارين نفس اليوم ووزنها وعداتها وحالة تنفيذها.
+- تحليل مبدئي للعوامل المؤثرة على أداء اليوم.
+- الانتقال لليوم السابق أو التالي.
+
+### التقدم
+
+تبويب **التقدم** يعرض الحجم التدريبي، إجمالي المجموعات والعدات، مقارنة الأسبوع والشهر، أقل يوم أداءً، تقرير الأيام، التقدم حسب كل تمرين، والتحليل الشهري لأسباب التطور أو التراجع.
+
+### حسابي
+
+تبويب **حسابي** يعرض الاسم والسن والصورة الشخصية ونسبة إنجاز الأسبوع. إذا لم يكن المستخدم مسجلًا، تظهر شاشة تسجيل الدخول أو إنشاء حساب.
+
+## واجهات API
+
+- `POST /api/auth/register` إنشاء حساب.
+- `POST /api/auth/login` تسجيل الدخول وإنشاء Token.
+- `GET /api/profile` تحميل بيانات الحساب.
+- `PATCH /api/profile` تحديث بيانات الحساب والصورة.
+- `GET /api/exercises` جلب اقتراحات التمارين من ExerciseDB حسب النظام وعضلات اليوم.
+- `POST /api/training-plan` إنشاء قالب خطة للنظام.
+- `GET /api/workout-plan` تحميل النظام المحفوظ.
+- `PUT /api/workout-plan` حفظ النظام والتمارين.
+- `GET /api/workout-log` تحميل أداء تمرين يوم معين.
+- `PUT /api/workout-log` حفظ أداء تمرين يوم معين.
+
+## التقنيات المستخدمة
+
+- Next.js 16 وReact.
+- TypeScript.
+- MongoDB.
+- ExerciseDB لاقتراح التمارين.
+- lucide-react للأيقونات.
+- Token داخل `httpOnly cookie` لجلسة تسجيل الدخول.
+
+## التشغيل
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+افتح `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+يلزم إعداد `MONGODB_URI` في ملف `.env.local` حتى يعمل حفظ الحسابات والأنظمة وأداء التمارين في قاعدة البيانات.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+للفحص:
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+npx tsc --noEmit
+```
