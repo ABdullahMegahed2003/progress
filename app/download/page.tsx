@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
 import Link from "next/link";
@@ -24,6 +25,7 @@ export default function DownloadLandingPage() {
       <header className="landing-nav">
         <div className="nav-container">
           <Link href="/" className="landing-logo">
+            <img src="/app-logo.png" alt="تَقَدُّم" className="landing-logo-img" />
             <span className="logo-badge">PRO</span>
             <span className="logo-text">تَقَدُّم</span>
           </Link>
