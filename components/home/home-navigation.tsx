@@ -1,4 +1,6 @@
-import { BarChart3, CalendarDays, Dumbbell, Home, UserRound } from "lucide-react";
+"use client";
+
+import { BarChart3, CalendarDays, Dumbbell, Flame, Home, UserRound } from "lucide-react";
 import type { Screen } from "@/components/home/home-data";
 
 type HomeNavigationProps = {
@@ -17,12 +19,20 @@ export function HomeNavigation({ screen, onNavigate }: HomeNavigationProps) {
 
   return (
     <nav className="app-bottom-nav">
-      {navItems.map(({ id, label, icon: Icon }) => (
-        <button className={screen === id ? "active" : ""} key={id} onClick={() => onNavigate(id)}>
-          <Icon size={20} />
-          <span>{label}</span>
-        </button>
-      ))}
+      {navItems.map(({ id, label, icon: Icon }) => {
+        const isActive = screen === id;
+        return (
+          <button
+            key={id}
+            className={isActive ? "active" : ""}
+            onClick={() => onNavigate(id)}
+            aria-label={label}
+          >
+            <Icon size={20} className={isActive ? "text-[#00ff88]" : "text-gray-400"} />
+            <span>{label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 }
