@@ -132,9 +132,11 @@ export default function DailyLogPage() {
           <span>الرئيسية</span>
         </Link>
         <div className="home-logo flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00f0ff]/20 to-[#00ff88]/20 border border-[#00f0ff]/40 flex items-center justify-center text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.25)]">
-            <ClipboardList size={16} />
-          </div>
+          <img
+            src="/app-logo.png"
+            alt="سجل اليوم"
+            className="w-8 h-8 rounded-xl object-cover border border-[#00f0ff]/40 shadow-[0_0_14px_rgba(0,240,255,0.3)]"
+          />
           <span className="text-lg font-black tracking-tight">سجل اليوم</span>
         </div>
       </header>

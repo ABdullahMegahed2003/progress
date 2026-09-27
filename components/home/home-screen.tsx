@@ -68,11 +68,13 @@ export function HomeScreen() {
     <main className={dark ? "app-shell" : "app-shell light-home"}>
       <header className="app-header">
         
-        {/* Logo with Icon instead of text */}
+        {/* Logo with 3D Image Icon */}
         <div className="home-logo flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00ff88]/20 to-[#00f0ff]/20 border border-[#00ff88]/40 flex items-center justify-center text-[#00ff88] shadow-[0_0_12px_rgba(0,255,136,0.25)]">
-            <Dumbbell size={16} />
-          </div>
+          <img
+            src="/app-logo.png"
+            alt="تَقَدُّم Logo"
+            className="w-8 h-8 rounded-xl object-cover border border-[#00ff88]/40 shadow-[0_0_14px_rgba(0,255,136,0.3)]"
+          />
           <span className="text-lg font-black tracking-tight">تَقَدُّم</span>
         </div>
 
