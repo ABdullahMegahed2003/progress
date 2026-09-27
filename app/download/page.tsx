@@ -25,7 +25,7 @@ export default function DownloadLandingPage() {
         <div className="nav-container">
           <Link href="/" className="landing-logo">
             <span className="logo-badge">PRO</span>
-            <span className="logo-text">تَقَدُّم <span>مختبر الأداء</span></span>
+            <span className="logo-text">تَقَدُّم</span>
           </Link>
 
           <nav className="nav-links">
@@ -94,7 +94,7 @@ export default function DownloadLandingPage() {
               <div className="phone-screen real-app-theme">
                 {/* Real App Header */}
                 <div className="app-mockup-header">
-                  <div className="home-logo">تَقَدُّم<span>مختبر الأداء</span></div>
+                  <div className="home-logo">تَقَدُّم</div>
                   <div className="app-header-icons">
                     <Moon size={14} className="icon-gold" />
                   </div>
@@ -385,7 +385,7 @@ export default function DownloadLandingPage() {
       <footer className="landing-footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <div className="logo-text">تَقَدُّم <span>مختبر الأداء</span></div>
+            <div className="logo-text">تَقَدُّم</div>
             <p>تطبيق التمرين الاحترافي لتنظيم تدريبك اليومي ومتابعة الكتلة العضلية.</p>
           </div>
           <div className="footer-copyright">

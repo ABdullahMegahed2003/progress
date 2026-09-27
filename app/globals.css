@@ -32,6 +32,58 @@
   --border-cyan: rgba(0, 240, 255, 0.25);
 }
 
+:root.light-mode, body.light-mode, .light-home {
+  --bg-void: #f8fafc;
+  --bg-deep: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-card-hover: rgba(255, 255, 255, 1);
+  --bg-card-solid: #ffffff;
+  --bg-surface: #e2e8f0;
+
+  --neon-green: #059669;
+  --neon-green-dim: #047857;
+  --neon-green-glow: rgba(5, 150, 105, 0.2);
+  
+  --neon-cyan: #0284c7;
+  --neon-cyan-dim: #0369a1;
+  --neon-cyan-glow: rgba(2, 132, 199, 0.2);
+
+  --neon-gold: #d97706;
+  --neon-gold-glow: rgba(217, 119, 6, 0.2);
+
+  --neon-pink: #e11d48;
+  --neon-pink-glow: rgba(225, 29, 72, 0.2);
+
+  --ink-pure: #0f172a;
+  --ink-primary: #1e293b;
+  --ink-muted: #64748b;
+  --ink-dark: #94a3b8;
+
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-neon: rgba(5, 150, 105, 0.3);
+  --border-cyan: rgba(2, 132, 199, 0.3);
+}
+
+.light-mode body, body.light-mode, .light-home {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.light-mode .app-header, .light-home .app-header {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.light-mode .app-bottom-nav, .light-home .app-bottom-nav {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.light-mode .home-logo, .light-home .home-logo {
+  color: #0f172a !important;
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
