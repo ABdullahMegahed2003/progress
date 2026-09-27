@@ -29,7 +29,7 @@ export default function DownloadLandingPage() {
           </nav>
 
           <div className="nav-actions">
-            <a href="/downloads/gym-app.apk" download className="btn-primary-glow sm pulse-anim">
+            <a href="https://github.com/ABdullahMegahed2003/progress/releases/download/v1.0.0/gym-app.apk" className="btn-primary-glow sm pulse-anim">
               <Download size={16} />
               <span>تنزيل APK</span>
             </a>
@@ -55,11 +55,11 @@ export default function DownloadLandingPage() {
           </p>
 
           <div className="hero-cta-group">
-            <a href="/downloads/gym-app.apk" download className="btn-primary-glow lg pulse-anim">
+            <a href="https://github.com/ABdullahMegahed2003/progress/releases/download/v1.0.0/gym-app.apk" className="btn-primary-glow lg pulse-anim">
               <Download size={24} />
               <div className="btn-text-stack">
                 <span className="btn-main">تنزيل ملف APK المباشر</span>
-                <span className="btn-sub">مجاني 100% • 18.5 MB • Android</span>
+                <span className="btn-sub">مجاني 100% • Android APK • v1.0.0</span>
               </div>
             </a>
 
@@ -362,9 +362,9 @@ export default function DownloadLandingPage() {
           <h2>جاهز لتحسين أداؤك في الجيم؟</h2>
           <p>احصل على النسخة الرسمية من تطبيق تَقَدُّم مجاناً الآن وابدأ في تتبع نتائجك.</p>
 
-          <a href="/downloads/gym-app.apk" download className="btn-primary-glow xl pulse-anim">
+          <a href="https://github.com/ABdullahMegahed2003/progress/releases/download/v1.0.0/gym-app.apk" className="btn-primary-glow xl pulse-anim">
             <Download size={26} />
-            <span>تنزيل APK المباشر (18.5 MB)</span>
+            <span>تنزيل APK المباشر (v1.0.0)</span>
           </a>
         </div>
       </section>
