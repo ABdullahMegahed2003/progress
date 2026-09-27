@@ -3,6 +3,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import { Activity, Award, Camera, CheckCircle2, Flame, ImagePlus, LogIn, LogOut, ShieldCheck, Sparkles, UserRound, Zap } from "lucide-react";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
 type Account = { name: string; age: number | null; avatar: string; email?: string };
 
@@ -79,13 +80,12 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
     };
   }, []);
 
-  function uploadAvatar(event: ChangeEvent<HTMLInputElement>) {
+  async function uploadAvatar(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !account) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const avatar = String(reader.result);
-      const updated = { ...account, avatar };
+    try {
+      const avatarUrl = await uploadImageToCloudinary(file);
+      const updated = { ...account, avatar: avatarUrl };
       setAccount(updated);
       localStorage.setItem("gym-user-profile", JSON.stringify(updated));
       await fetch("/api/profile", {
@@ -93,8 +93,9 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
       }).catch(() => null);
-    };
-    reader.readAsDataURL(file);
+    } catch (e) {
+      console.error("Avatar upload failed:", e);
+    }
   }
 
   function handleLogout() {
