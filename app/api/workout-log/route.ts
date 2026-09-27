@@ -5,9 +5,18 @@ export const dynamic = "force-static";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const date = searchParams.get("date");
-    const system = searchParams.get("system");
+    let date: string | null = null;
+    let system: string | null = null;
+    try {
+      if (request && request.url) {
+        const { searchParams } = new URL(request.url);
+        date = searchParams.get("date");
+        system = searchParams.get("system");
+      }
+    } catch {
+      // Prerender fallback
+    }
+
     const logsCollection = await getWorkoutLogsCollection();
 
     if (date) {

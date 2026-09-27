@@ -5,10 +5,17 @@ export const dynamic = "force-static";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const system = searchParams.get("system");
-    const plansCollection = await getPlansCollection();
+    let system: string | null = null;
+    try {
+      if (request && request.url) {
+        const { searchParams } = new URL(request.url);
+        system = searchParams.get("system");
+      }
+    } catch {
+      // Prerender fallback
+    }
 
+    const plansCollection = await getPlansCollection();
     const plan = await plansCollection.findOne(system ? { system } : {});
     return NextResponse.json({ success: true, plan });
   } catch (error) {
