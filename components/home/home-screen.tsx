@@ -62,7 +62,7 @@ export function HomeScreen() {
     setScreen(screenToOpen);
   }
 
-  if (authOpen) return <AuthScreen />;
+  if (authOpen) return <AuthScreen onClose={() => setAuthOpen(false)} />;
 
   return (
     <main className={dark ? "app-shell" : "app-shell light-home"}>
