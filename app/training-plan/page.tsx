@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, type ChangeEvent, type FormEvent } from 
 import { Activity, ArrowRight, Calendar, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Dumbbell, Flame, Plus, Sparkles, Trash2, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { syncDataToCloud } from "@/lib/offline-sync";
 
 type SetLog = { id: string; reps: string; weight: string; done: boolean };
 type WorkoutExercise = { id: string; name: string; sets: SetLog[]; skipped: boolean };
@@ -152,7 +153,9 @@ function TrainingPlanContent() {
     localStorage.setItem(`gym-workout-${system}-${weekStart}`, JSON.stringify(nextPlan));
     if (mode === "log") {
       const day = nextPlan[selectedDay];
-      if (day) fetch("/api/workout-log", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(day) }).catch(() => undefined);
+      if (day) {
+        syncDataToCloud("/api/workout-log", { ...day, system });
+      }
     }
   }
 
@@ -208,16 +211,8 @@ function TrainingPlanContent() {
   }
 
   async function saveSystemPlan() {
-    const response = await fetch("/api/workout-plan", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ system, days: plan.map(({ day, exercises }) => ({ day, exercises: exercises.map(({ name }) => name) })) }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error ?? "تعذر حفظ النظام");
-      return;
-    }
+    const planPayload = { system, days: plan.map(({ day, exercises }) => ({ day, exercises: exercises.map(({ name }) => name) })) };
+    syncDataToCloud("/api/workout-plan", planPayload);
     localStorage.setItem("gym-active-system", system);
     localStorage.setItem("gym-system-saved", system);
     setSavedNotice(true);
