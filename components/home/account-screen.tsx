@@ -2,9 +2,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { ChangeEvent, useEffect, useState } from "react";
-import { Activity, Award, Camera, CheckCircle2, Flame, ImagePlus, LogIn, ShieldCheck, Sparkles, UserRound, Zap } from "lucide-react";
+import { Activity, Award, Camera, CheckCircle2, Flame, ImagePlus, LogIn, LogOut, ShieldCheck, Sparkles, UserRound, Zap } from "lucide-react";
 
-type Account = { name: string; age: number | null; avatar: string };
+type Account = { name: string; age: number | null; avatar: string; email?: string };
 
 function weekKey(offset: number) {
   const date = new Date();
@@ -18,6 +18,41 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
   const [loading, setLoading] = useState(true);
   const [weeklyProgress, setWeeklyProgress] = useState(0);
 
+  const loadProfile = () => {
+    // 1. Try LocalStorage
+    const localProfile = localStorage.getItem("gym-user-profile");
+    if (localProfile) {
+      try {
+        const parsed = JSON.parse(localProfile) as Account;
+        if (parsed && parsed.name) {
+          setAccount(parsed);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 2. Try API fallback
+    fetch("/api/profile")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data?.profile) {
+          const prof = {
+            name: data.profile.name ?? "المتدرب",
+            age: data.profile.age ?? null,
+            avatar: data.profile.avatar ?? "",
+            email: data.profile.email ?? "",
+          };
+          setAccount(prof);
+          localStorage.setItem("gym-user-profile", JSON.stringify(prof));
+        } else {
+          setAccount(null);
+        }
+      })
+      .catch(() => setAccount(null))
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     const loadProgress = window.setTimeout(() => {
       const system = localStorage.getItem("gym-system-saved");
@@ -26,18 +61,22 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
       if (!raw) return;
       try {
         const days = JSON.parse(raw) as Array<{ exercises: Array<{ skipped: boolean; sets: Array<{ done: boolean }> }> }>;
-        const sets = days.flatMap((day) => day.exercises.flatMap((exercise) => exercise.skipped ? [] : exercise.sets));
+        const sets = days.flatMap((day) => day.exercises.flatMap((exercise) => (exercise.skipped ? [] : exercise.sets)));
         setWeeklyProgress(sets.length ? Math.round((sets.filter((set) => set.done).length / sets.length) * 100) : 0);
-      } catch { setWeeklyProgress(0); }
+      } catch {
+        setWeeklyProgress(0);
+      }
     }, 0);
 
-    fetch("/api/profile")
-      .then((response) => response.ok ? response.json() : null)
-      .then((data) => setAccount(data?.profile ? { name: data.profile.name ?? "", age: data.profile.age ?? null, avatar: data.profile.avatar ?? "" } : null))
-      .catch(() => setAccount(null))
-      .finally(() => setLoading(false));
+    loadProfile();
 
-    return () => window.clearTimeout(loadProgress);
+    const handleUserChanged = () => loadProfile();
+    window.addEventListener("gym-user-changed", handleUserChanged);
+
+    return () => {
+      window.clearTimeout(loadProgress);
+      window.removeEventListener("gym-user-changed", handleUserChanged);
+    };
   }, []);
 
   function uploadAvatar(event: ChangeEvent<HTMLInputElement>) {
@@ -46,10 +85,21 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
     const reader = new FileReader();
     reader.onload = async () => {
       const avatar = String(reader.result);
-      setAccount({ ...account, avatar });
-      await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...account, avatar }) });
+      const updated = { ...account, avatar };
+      setAccount(updated);
+      localStorage.setItem("gym-user-profile", JSON.stringify(updated));
+      await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      }).catch(() => null);
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("gym-user-profile");
+    setAccount(null);
   }
 
   if (loading) {
@@ -111,7 +161,9 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
         </div>
 
         <h1 className="text-xl font-black text-white m-0">{account.name}</h1>
-        <div className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full bg-[#00ff88]/15 border border-[#00ff88]/30 text-[#00ff88] text-[11px] font-bold">
+        {account.email && <span className="text-xs text-gray-400 block mt-0.5">{account.email}</span>}
+
+        <div className="inline-flex items-center gap-1 mt-2 px-2.5 py-0.5 rounded-full bg-[#00ff88]/15 border border-[#00ff88]/30 text-[#00ff88] text-[11px] font-bold">
           <ShieldCheck size={13} />
           <span>حساب رياضي نشط</span>
         </div>
@@ -174,6 +226,15 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
           </div>
         </div>
       </div>
+
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        className="w-full py-3 px-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+      >
+        <LogOut size={16} />
+        <span>تسجيل الخروج من الحساب</span>
+      </button>
     </div>
   );
 }

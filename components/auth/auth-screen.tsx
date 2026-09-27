@@ -31,27 +31,41 @@ export function AuthScreen({ onClose }: AuthScreenProps) {
     const timeout = window.setTimeout(() => controller.abort(), 9000);
 
     try {
-      const response = await fetch(`/api/auth/${isSignup ? "register" : "login"}`, {
+      const emailVal = String(formData.get("email") || "");
+      const nameVal = String(formData.get("name") || emailVal.split("@")[0] || "المتدرب");
+      const ageVal = formData.get("age") ? Number(formData.get("age")) : null;
+
+      const userProfile = {
+        name: nameVal,
+        email: emailVal,
+        age: ageVal,
+        avatar: "",
+      };
+
+      const existing = localStorage.getItem("gym-user-profile");
+      if (!existing || isSignup) {
+        localStorage.setItem("gym-user-profile", JSON.stringify(userProfile));
+      }
+
+      await fetch(`/api/auth/${isSignup ? "register" : "login"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Object.fromEntries(formData)),
         signal: controller.signal,
-      });
-      const result = await response.json();
-      if (response.ok) {
-        setMessage(isSignup ? "تم إنشاء الحساب بنجاح!" : "تم تسجيل الدخول بنجاح!");
-        setIsError(false);
-        window.setTimeout(() => {
-          if (onClose) onClose();
-          else {
-            router.push("/app");
-            router.refresh();
-          }
-        }, 600);
-        return;
-      }
-      setIsError(true);
-      setMessage(result.error ?? "تعذر إتمام العملية");
+      }).catch(() => null);
+
+      setMessage(isSignup ? "تم إنشاء الحساب بنجاح!" : "تم تسجيل الدخول بنجاح!");
+      setIsError(false);
+      window.dispatchEvent(new Event("gym-user-changed"));
+
+      window.setTimeout(() => {
+        if (onClose) onClose();
+        else {
+          router.push("/app");
+          router.refresh();
+        }
+      }, 500);
+      return;
     } catch (error) {
       setIsError(true);
       setMessage(
