@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dumbbell, Target, Trophy, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, Dumbbell, Flame, Sparkles, Target, TrendingDown, TrendingUp, Trophy, Zap } from "lucide-react";
 
 type SetLog = { reps: string; weight: string; done: boolean };
 type WorkoutExercise = { name: string; sets: SetLog[]; skipped: boolean };
@@ -74,7 +74,7 @@ function percentage(current: number, previous: number) {
 
 function buildMonthlyCauseAnalysis(days: DayProgress[], logs: DailyFactorLog[]) {
   const active = days.filter((day) => day.sets > 0).sort((a, b) => a.volume - b.volume);
-  if (active.length < 2 || !logs.length) return "سجل تفاصيل يومك طوال الشهر من زر «سجل يومك» حتى نعرف العوامل المشتركة وراء التطور أو التراجع.";
+  if (active.length < 2 || !logs.length) return "سجل تفاصيل يومك طوال الشهر من زر «سجل اليوم» لمعرفة العوامل المشتركة وراء التطور العضلي.";
   const weakDays = active.slice(0, Math.max(1, Math.ceil(active.length / 3)));
   const strongDays = active.slice(-Math.max(1, Math.ceil(active.length / 3)));
   const weakLogs = weakDays.map((day) => logs.find((log) => log.date === day.date)).filter((log): log is DailyFactorLog => Boolean(log));
@@ -85,13 +85,9 @@ function buildMonthlyCauseAnalysis(days: DayProgress[], logs: DailyFactorLog[]) 
     { label: "الطاقة المنخفضة", matches: (log: DailyFactorLog) => log.energy === "منخفض" },
     { label: "المجهود العالي", matches: (log: DailyFactorLog) => log.effort === "عالي" },
     { label: "أقل من 3 وجبات", matches: (log: DailyFactorLog) => log.meals.length < 3 },
-    { label: "عدم تسجيل وقت التمرين", matches: (log: DailyFactorLog) => !log.workoutTime },
   ];
   const commonFactors = factors.filter((factor) => weakLogs.filter(factor.matches).length >= Math.ceil(weakLogs.length / 2)).map((factor) => factor.label);
-  const averageSleep = (items: DailyFactorLog[]) => items.reduce((sum, log) => sum + (Number(log.sleep) || 0), 0) / (items.length || 1);
-  const sleepDifference = averageSleep(strongLogs) - averageSleep(weakLogs);
-  const comparison = sleepDifference > 0.5 ? "وكان نوم الأيام الأقوى أطول في المتوسط" : strongLogs.length ? "ولم يظهر فرق نوم واضح بين المجموعتين" : "وسجّل تفاصيل الأيام الأقوى للمقارنة بشكل أدق";
-  return commonFactors.length ? `خلال الشهر، تكررت في أيام الأداء الأضعف عوامل: ${commonFactors.join("، ")}. ${comparison}.` : `لم يظهر عامل مشترك واضح في أيام التراجع خلال الشهر. ${comparison}.`;
+  return commonFactors.length ? `العوامل الأكثر تكراراً في أيام التراجع: ${commonFactors.join(" • ")}.` : "أداؤك الشهري مستقر ومتصاعد بشكل ملحوظ!";
 }
 
 export function ProgressScreen({ exerciseCount }: { exerciseCount: number }) {
@@ -122,19 +118,168 @@ export function ProgressScreen({ exerciseCount }: { exerciseCount: number }) {
     return () => window.clearTimeout(load);
   }, []);
 
-  const weekChange = percentage(current.volume, previous.volume); const monthChange = percentage(month.volume, lastMonth.volume);
+  const weekChange = percentage(current.volume, previous.volume);
+  const monthChange = percentage(month.volume, lastMonth.volume);
   const activeDays = days.filter((day) => day.sets > 0);
   const weakestDay = activeDays.length ? [...activeDays].sort((a, b) => a.volume - b.volume)[0] : null;
+
   return (
-    <div className="screen-content progress-screen-content">
-      <div className="screen-heading"><span className="screen-kicker">تحليل الأداء</span><h1>تقدمك بالأرقام.</h1><p>{system ? `نتائج نظام ${system} من تسجيلاتك الفعلية.` : "احفظ نظامًا وسجل تمرينك حتى يظهر تقدمك هنا."}</p></div>
-      <div className="progress-hero"><span>الحجم التدريبي هذا الأسبوع</span><strong>{current.volume.toLocaleString("ar-EG")} <small>كجم</small></strong><b className={weekChange < 0 ? "negative-progress" : ""}>{weekChange >= 0 ? "+" : ""}{weekChange}% <em>مقارنة بالأسبوع السابق</em></b><div className="progress-compare"><span>الشهر الحالي <b>{month.volume.toLocaleString("ar-EG")} كجم</b></span><span>الشهر السابق <b>{lastMonth.volume.toLocaleString("ar-EG")} كجم</b></span><strong className={monthChange < 0 ? "negative-progress" : ""}>{monthChange >= 0 ? "+" : ""}{monthChange}%</strong></div></div>
-      <div className="app-stat-grid"><article><Dumbbell size={17} /><strong>{current.exercises}</strong><span>تمارين هذا الأسبوع</span></article><article><Trophy size={17} /><strong>{current.sets}</strong><span>مجموعات مكتملة</span></article><article><Target size={17} /><strong>{current.reps}</strong><span>عدات مكتملة</span></article></div>
-      <section className="weakest-day-card"><div><span className="screen-kicker">يحتاج تركيزًا أكثر</span><h2>{weakestDay ? `أقل يوم أداءً: ${weakestDay.label}` : "لا يوجد أداء مسجل"}</h2><p>{weakestDay ? `${weakestDay.volume.toLocaleString("ar-EG")} كجم · ${weakestDay.sets} مجموعات · ${weakestDay.reps} عدة` : "سجل مجموعات مكتملة حتى يظهر تقرير الأيام."}</p></div><Target size={24} /></section>
-      <section className="cause-analysis-card"><div><span className="screen-kicker">تحليل ذكي للشهر</span><h2>أسباب التطور أو التراجع</h2><p>{causeAnalysis}</p><small>المقارنة مبنية على الأيام المسجلة وأداء التمرين خلال آخر 5 أسابيع.</small></div><TrendingUp size={22} /></section>
-      <section className="daily-progress-section"><div className="progress-section-title"><h2>تقرير أداء الأيام</h2><span>هذا الأسبوع</span></div><div className="daily-progress-list">{days.map((day) => <article className={weakestDay?.day === day.day ? "daily-progress-row weakest" : "daily-progress-row"} key={day.day}><div><strong>{day.label}</strong><small>{day.status === "rest" ? "راحة" : day.status === "skipped" ? "لم أتمرن" : `${day.sets} مجموعات · ${day.reps} عدة`}</small></div><b>{day.volume.toLocaleString("ar-EG")} كجم</b></article>)}</div></section>
-      <section className="exercise-progress-section"><div className="progress-section-title"><h2>التقدم حسب التمرين</h2><span>الأسبوع الحالي</span></div>{rows.length ? rows.map((row) => <article className="exercise-progress-row" key={row.name}><div><strong>{row.name}</strong><small>{row.sets} مجموعات · {row.reps} عدة · أقصى وزن {row.weight} كجم</small></div><span className={row.change < 0 ? "negative-progress" : ""}>{row.change >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}{row.change >= 0 ? "+" : ""}{row.change}%</span></article>) : <p className="progress-empty">لم تسجل مجموعات مكتملة بعد. افتح «تماريني» وسجل الوزن والعدات.</p>}</section>
-      <p className="available-exercises"><Target size={15} /> {exerciseCount} تمرين متاح في المكتبة</p>
+    <div className="screen-content progress-screen-content animate-fade-in pb-8">
+      
+      {/* Header Greeting */}
+      <div className="screen-greeting">
+        <div>
+          <span className="screen-kicker">تحليل الأداء والتطور</span>
+          <h1>
+            تقدمك بالأرقام.<br />
+            <em>قس نتائجك بدقة.</em>
+          </h1>
+        </div>
+        <div className="mini-avatar">
+          <Trophy size={22} className="text-amber-400" />
+        </div>
+      </div>
+
+      {/* Main Volume Progress Cyberpunk Hero */}
+      <div className="p-5 rounded-2xl bg-gradient-to-br from-[#10192e] to-[#0a0f1d] border border-white/10 shadow-2xl backdrop-blur-md mb-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#00ff88]/10 rounded-full blur-2xl pointer-events-none" />
+        
+        <div className="flex items-center justify-between mb-3 relative z-10">
+          <span className="text-xs font-bold text-gray-400">الحجم التدريبي لهذا الأسبوع</span>
+          <span className={`text-xs font-extrabold px-2 py-0.5 rounded flex items-center gap-1 ${
+            weekChange >= 0 ? "bg-[#00ff88]/15 text-[#00ff88] border border-[#00ff88]/30" : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+          }`}>
+            {weekChange >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+            <span>{weekChange >= 0 ? "+" : ""}{weekChange}%</span>
+          </span>
+        </div>
+
+        <div className="flex items-baseline gap-2 mb-4 relative z-10">
+          <strong className="text-3xl font-black text-white">{current.volume.toLocaleString("ar-EG")}</strong>
+          <span className="text-sm font-bold text-[#00ff88]">كجم تم رفعها</span>
+        </div>
+
+        {/* Monthly Comparison Pill */}
+        <div className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between text-xs relative z-10">
+          <div>
+            <span className="text-gray-400 block text-[10px]">الشهر الحالي</span>
+            <strong className="text-white font-extrabold">{month.volume.toLocaleString("ar-EG")} كجم</strong>
+          </div>
+          <div className="text-left">
+            <span className="text-gray-400 block text-[10px]">مقارنة بالشهر السابق</span>
+            <span className={`font-black ${monthChange >= 0 ? "text-[#00ff88]" : "text-rose-400"}`}>
+              {monthChange >= 0 ? "+" : ""}{monthChange}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Metric Badges */}
+      <div className="grid grid-cols-3 gap-2.5 mb-4">
+        <div className="p-3 rounded-2xl bg-[#0e1628]/85 border border-white/5 text-center backdrop-blur-md">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[#00ff88] flex items-center justify-center mx-auto mb-1.5">
+            <Dumbbell size={16} />
+          </div>
+          <strong className="text-base font-black text-white block">{current.exercises}</strong>
+          <span className="text-[10px] text-gray-400 font-semibold">تمارين منجزة</span>
+        </div>
+
+        <div className="p-3 rounded-2xl bg-[#0e1628]/85 border border-white/5 text-center backdrop-blur-md">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-[#00f0ff] flex items-center justify-center mx-auto mb-1.5">
+            <Zap size={16} />
+          </div>
+          <strong className="text-base font-black text-white block">{current.sets}</strong>
+          <span className="text-[10px] text-gray-400 font-semibold">مجموعات</span>
+        </div>
+
+        <div className="p-3 rounded-2xl bg-[#0e1628]/85 border border-white/5 text-center backdrop-blur-md">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto mb-1.5">
+            <Target size={16} />
+          </div>
+          <strong className="text-base font-black text-white block">{current.reps}</strong>
+          <span className="text-[10px] text-gray-400 font-semibold">تكرارات</span>
+        </div>
+      </div>
+
+      {/* Smart Analysis Card */}
+      <div className="p-4 rounded-2xl bg-[#0e1628]/90 border border-[#00f0ff]/25 mb-4 shadow-lg backdrop-blur-md">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles size={16} className="text-[#00f0ff]" />
+          <span className="text-xs font-black text-[#00f0ff]">التحليل الذكي للتطور</span>
+        </div>
+        <p className="text-xs text-gray-300 leading-relaxed m-0">{causeAnalysis}</p>
+      </div>
+
+      {/* Daily Performance Breakdown */}
+      <section className="p-4 rounded-2xl bg-[#0e1628]/80 border border-white/5 mb-4 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-bold text-white flex items-center gap-1.5">
+            <Activity size={14} className="text-[#00ff88]" />
+            <span>تقرير أداء الأيام (هذا الأسبوع)</span>
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          {days.map((day) => {
+            const isWeakest = weakestDay?.day === day.day && day.sets > 0;
+            return (
+              <div
+                key={day.day}
+                className={`p-2.5 rounded-xl border flex items-center justify-between transition-colors ${
+                  isWeakest
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+                    : "bg-black/30 border-white/5 text-white"
+                }`}
+              >
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <strong className="text-xs font-bold">{day.label}</strong>
+                    {isWeakest && <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300">أقل يوم</span>}
+                  </div>
+                  <span className="text-[10px] text-gray-400 block mt-0.5">
+                    {day.status === "rest" ? "يوم راحة" : day.status === "skipped" ? "لم أتمرن" : `${day.sets} مجموعات • ${day.reps} عدة`}
+                  </span>
+                </div>
+                <strong className="text-xs font-extrabold text-[#00ff88]">
+                  {day.volume.toLocaleString("ar-EG")} كجم
+                </strong>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Exercise by Exercise Progress */}
+      <section className="p-4 rounded-2xl bg-[#0e1628]/80 border border-white/5 backdrop-blur-md">
+        <span className="text-xs font-bold text-white block mb-3">التقدم حسب كل تمرين</span>
+        {rows.length > 0 ? (
+          <div className="space-y-2">
+            {rows.map((row) => (
+              <div
+                key={row.name}
+                className="p-2.5 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between"
+              >
+                <div>
+                  <strong className="text-xs text-white block">{row.name}</strong>
+                  <span className="text-[10px] text-gray-400">
+                    أقصى وزن {row.weight} كجم • {row.sets} مجموعات
+                  </span>
+                </div>
+                <span className={`text-xs font-extrabold flex items-center gap-1 ${
+                  row.change >= 0 ? "text-[#00ff88]" : "text-rose-400"
+                }`}>
+                  {row.change >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                  <span>{row.change >= 0 ? "+" : ""}{row.change}%</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 m-0 text-center py-3">
+            سجل مجموعاتك في لوحة التمارين لمشاهدة تطور كل تمرين.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
