@@ -1,0 +1,44 @@
+{
+  "name": "تَقَدُّم | مختبر الأداء الرياضي",
+  "short_name": "تَقَدُّم Gym",
+  "description": "تطبيق إدارة التمارين وتتبع الأوزان والتطور العضلي اليومي",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/icon-512.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["fitness", "health", "sports", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "الواجهة الرئيسية",
+      "url": "/app",
+      "description": "الذهاب للتمارين والجدول اليومي"
+    },
+    {
+      "name": "خطط التدريب",
+      "url": "/training-plan",
+      "description": "استعراض وتعديل الأنظمة التدريبية"
+    },
+    {
+      "name": "السجل اليومي",
+      "url": "/daily-log",
+      "description": "سجل الأوزان والتكرارات"
+    }
+  ]
+}

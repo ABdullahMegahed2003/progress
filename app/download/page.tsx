@@ -7,6 +7,12 @@ import { Download, Smartphone, ShieldCheck, Zap, Activity, Dumbbell, Calendar, F
 export default function DownloadLandingPage() {
   const [activeTab, setActiveTab] = useState<"home" | "plans" | "log">("home");
 
+  const triggerPWA = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("trigger-pwa-install"));
+    }
+  };
+
   return (
     <div className="landing-wrapper">
       {/* Background ambient glow effects */}
@@ -29,10 +35,10 @@ export default function DownloadLandingPage() {
           </nav>
 
           <div className="nav-actions">
-            <a href="https://github.com/ABdullahMegahed2003/progress/releases/download/v1.0.0/gym-app.apk" className="btn-primary-glow sm pulse-anim">
-              <Download size={16} />
-              <span>تنزيل APK</span>
-            </a>
+            <button onClick={triggerPWA} className="btn-primary-glow sm pulse-anim cursor-pointer">
+              <Smartphone size={16} />
+              <span>تثبيت على الهاتف</span>
+            </button>
           </div>
         </div>
       </header>
@@ -42,7 +48,7 @@ export default function DownloadLandingPage() {
         <div className="hero-content">
           <div className="status-badge slide-in">
             <span className="badge-dot pulse-dot" />
-            <span>تطبيق الموبايل الرسمي v1.0.0 (Android APK)</span>
+            <span>تطبيق الموبايل الذكي (Android & iPhone PWA)</span>
           </div>
 
           <h1 className="hero-title">
@@ -51,20 +57,20 @@ export default function DownloadLandingPage() {
           </h1>
 
           <p className="hero-subtitle">
-            حمل تطبيق <strong>تَقَدُّم Gym App</strong> الأصلي على هاتفك. تتبع أوزانك، صمم جداول التمارين الاحترافية (Push Pull Legs / Arnold Split)، وقس نموك العضلي بدقة متناهية ودون الحاجة لاتصال دائم بالإنترنت.
+            ثبت تطبيق <strong>تَقَدُّم Gym App</strong> مباشرة على هاتفك بنقرة واحدة وبدون ملفات معقدة. تتبع أوزانك، صمم جداول التمارين الاحترافية، وقس نموك العضلي بدقة.
           </p>
 
           <div className="hero-cta-group">
-            <a href="https://github.com/ABdullahMegahed2003/progress/releases/download/v1.0.0/gym-app.apk" className="btn-primary-glow lg pulse-anim">
-              <Download size={24} />
+            <button onClick={triggerPWA} className="btn-primary-glow lg pulse-anim cursor-pointer">
+              <Smartphone size={24} />
               <div className="btn-text-stack">
-                <span className="btn-main">تنزيل ملف APK المباشر</span>
-                <span className="btn-sub">مجاني 100% • Android APK • v1.0.0</span>
+                <span className="btn-main">تثبيت فوري على الهاتف (PWA)</span>
+                <span className="btn-sub">بنقرة واحدة • بدون تنزيل APK • أندرويد وآيفون</span>
               </div>
-            </a>
+            </button>
 
             <Link href="/app" className="btn-secondary-glass lg hover-lift">
-              <span>تجربة النسخة أونلاين</span>
+              <span>فتح التطبيق مباشرة</span>
               <ChevronLeft size={18} />
             </Link>
           </div>
@@ -331,26 +337,26 @@ export default function DownloadLandingPage() {
       <section id="install" className="landing-install">
         <div className="section-header">
           <span className="sub-tag">طريقة التثبيت على الموبايل</span>
-          <h2>ثبت التطبيق على هاتفك في 3 خطوات بسيطة</h2>
+          <h2>ثبت التطبيق على هاتفك بنقرة واحدة</h2>
         </div>
 
         <div className="steps-container">
           <div className="step-card hover-lift">
             <div className="step-num">1</div>
-            <h4>قم بتنزيل ملف APK</h4>
-            <p>اضغط على زر "تنزيل ملف APK المباشر" لبدء التحميل المجاني على جهاز الأندرويد.</p>
+            <h4>اضغط على زر التثبيت</h4>
+            <p>اضغط على زر "تثبيت فوري على الهاتف" من المتصفح في هاتفك.</p>
           </div>
 
           <div className="step-card hover-lift">
             <div className="step-num">2</div>
-            <h4>افتح الملف والموافقة</h4>
-            <p>افتح ملف `gym-app.apk` المحمل، ووافق على التثبيت من هذا المصدر في إعدادات الهاتف.</p>
+            <h4>الموافقة الفورية (أندرويد وآيفون)</h4>
+            <p>اختر "تثبيت" أو على آيفون اضغط (مشاركة ⬅️ إضافة للشاشة الرئيسية).</p>
           </div>
 
           <div className="step-card hover-lift">
             <div className="step-num">3</div>
-            <h4>استمتع بالتمرين!</h4>
-            <p>افتح تطبيق "تَقَدُّم" من قائمة تطبيقاتك ابدأ في تنظيم تمرينك اليومي فوراً.</p>
+            <h4>افتح واستمتع بالتمرين!</h4>
+            <p>ستجد أيقونة التطبيق على شاشة هاتفك، يفتح بملء الشاشة وبدون متصفح.</p>
           </div>
         </div>
       </section>
@@ -360,12 +366,18 @@ export default function DownloadLandingPage() {
         <div className="banner-glass pulse-border">
           <Sparkles className="sparkle-icon" size={32} />
           <h2>جاهز لتحسين أداؤك في الجيم؟</h2>
-          <p>احصل على النسخة الرسمية من تطبيق تَقَدُّم مجاناً الآن وابدأ في تتبع نتائجك.</p>
+          <p>ثبت تطبيق تَقَدُّم على هاتفك مجاناً الآن وابدأ في تتبع نتائجك بملء الشاشة.</p>
 
-          <a href="https://github.com/ABdullahMegahed2003/progress/releases/download/v1.0.0/gym-app.apk" className="btn-primary-glow xl pulse-anim">
-            <Download size={26} />
-            <span>تنزيل APK المباشر (v1.0.0)</span>
-          </a>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button onClick={triggerPWA} className="btn-primary-glow xl pulse-anim cursor-pointer">
+              <Smartphone size={26} />
+              <span>تثبيت فوري على الهاتف (PWA)</span>
+            </button>
+            <a href="https://github.com/ABdullahMegahed2003/progress/releases/download/v1.0.0/gym-app.apk" className="btn-secondary-glass lg hover-lift">
+              <Download size={20} />
+              <span>تنزيل APK كملف بديل</span>
+            </a>
+          </div>
         </div>
       </section>
 
