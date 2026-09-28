@@ -80,27 +80,37 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
     };
   }, []);
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   async function uploadAvatar(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    if (!file || !account) return;
+    if (!file) return;
+    setUploadingAvatar(true);
     try {
       const avatarUrl = await uploadImageToCloudinary(file);
-      const updated = { ...account, avatar: avatarUrl };
-      setAccount(updated);
-      localStorage.setItem("gym-user-profile", JSON.stringify(updated));
-      await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      }).catch(() => null);
+      if (avatarUrl) {
+        const currentAcc = account || { name: "المتدرب", age: null, avatar: "", email: "" };
+        const updated = { ...currentAcc, avatar: avatarUrl };
+        setAccount(updated);
+        localStorage.setItem("gym-user-profile", JSON.stringify(updated));
+        window.dispatchEvent(new Event("gym-user-changed"));
+        await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        }).catch(() => null);
+      }
     } catch (e) {
       console.error("Avatar upload failed:", e);
+    } finally {
+      setUploadingAvatar(false);
     }
   }
 
   function handleLogout() {
     localStorage.removeItem("gym-user-profile");
     setAccount(null);
+    window.dispatchEvent(new Event("gym-user-changed"));
   }
 
   if (loading) {
@@ -156,9 +166,13 @@ export function AccountScreen({ onLogin }: { onLogin: () => void }) {
             className="absolute -bottom-1 -left-1 w-8 h-8 rounded-xl bg-[#00ff88] text-black flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform"
             title="تغيير الصورة الشخصية"
           >
-            <Camera size={15} />
+            {uploadingAvatar ? (
+              <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Camera size={15} />
+            )}
           </label>
-          <input id="account-avatar" className="hidden" type="file" accept="image/*" onChange={uploadAvatar} />
+          <input id="account-avatar" className="hidden" type="file" accept="image/*" disabled={uploadingAvatar} onChange={uploadAvatar} />
         </div>
 
         <h1 className="text-xl font-black text-white m-0">{account.name}</h1>

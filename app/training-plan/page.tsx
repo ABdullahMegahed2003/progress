@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
-import { Activity, ArrowRight, Calendar, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Dumbbell, Flame, Plus, Sparkles, Trash2, Zap } from "lucide-react";
+import { Activity, ArrowRight, Calendar, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Dumbbell, Flame, Plus, RefreshCw, Search, Sparkles, Trash2, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { syncDataToCloud } from "@/lib/offline-sync";
@@ -18,6 +18,48 @@ const systemDays: Record<string, number> = {
   "Arnold Split": 6,
   "Upper / Lower": 4,
   "Full Body": 3,
+};
+
+const musclePresets: Record<string, Array<{ name: string; sets: number }>> = {
+  "صدر وترايسبس (Chest & Triceps)": [
+    { name: "ضغط صدر بالبار المستوي (Bench Press)", sets: 4 },
+    { name: "ضغط صدر بالدمبل المائل (Incline Dumbbell Press)", sets: 3 },
+    { name: "تجميع صدر بالكابل (Cable Flyes)", sets: 3 },
+    { name: "ترايسبس بالحبل (Rope Pushdown)", sets: 4 },
+    { name: "ترايسبس بار فرنساوي (Skullcrushers)", sets: 3 },
+  ],
+  "ظهر وبايسبس (Back & Biceps)": [
+    { name: "سحب عالي بالبار (Lat Pulldown)", sets: 4 },
+    { name: "سحب أرضي بالماكينة (Seated Cable Row)", sets: 3 },
+    { name: "سحب بار T-Bar Row", sets: 4 },
+    { name: "بايسبس بالبار (Barbell Curl)", sets: 4 },
+    { name: "بايسبس دمبل هامر (Hammer Curl)", sets: 3 },
+  ],
+  "أرجل وسمانة (Legs & Calves)": [
+    { name: "سكوات بالبار (Barbell Squat)", sets: 4 },
+    { name: "دفع أرجل بالآلة (Leg Press)", sets: 4 },
+    { name: "تمديد أرجل بالآلة (Leg Extension)", sets: 3 },
+    { name: "كيرل أرجل خلفي (Seated Leg Curl)", sets: 3 },
+    { name: "رفع سمانة واقفاً (Standing Calf Raise)", sets: 4 },
+  ],
+  "أكتاف وترابيس (Shoulders & Traps)": [
+    { name: "ضغط أكتاف بالدمبل (Overhead Dumbbell Press)", sets: 4 },
+    { name: "رفرفة جانبي بالدمبل (Lateral Raise)", sets: 4 },
+    { name: "سحب حبل وجهي (Face Pulls)", sets: 3 },
+    { name: "رفرفة خلفي بالكابل (Rear Delt Flyes)", sets: 3 },
+  ],
+  "ذراعين كامل (Full Arms: Bi & Tri)": [
+    { name: "بايسبس بالبار (Barbell Curl)", sets: 4 },
+    { name: "ترايسبس بالحبل (Rope Pushdown)", sets: 4 },
+    { name: "بايسبس دمبل هامر (Hammer Curl)", sets: 3 },
+    { name: "ترايسبس بار فرنساوي (Skullcrushers)", sets: 3 },
+    { name: "كيرل بايسبس على الواعظ (Preacher Curl)", sets: 3 },
+  ],
+  "بطن وكور وكارديو (Core & Cardio)": [
+    { name: "طحن بطن بالكابل (Cable Crunch)", sets: 4 },
+    { name: "رفع أرجل معلق (Hanging Leg Raise)", sets: 3 },
+    { name: "بلانك ثابت (Plank Hold)", sets: 3 },
+  ],
 };
 
 const weekDayNames = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
@@ -90,11 +132,16 @@ function TrainingPlanContent() {
   const [savedNotice, setSavedNotice] = useState(false);
   const [hasSavedSystem, setHasSavedSystem] = useState(false);
   const [savedSystem, setSavedSystem] = useState("");
+
+  // Modals & Suggestion Bank state
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedExercise[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [selectedSuggestion, setSelectedSuggestion] = useState("");
-  const invalidSystem = !system || !systemDays[system];
+  const [muscleFilter, setMuscleFilter] = useState("الكل");
+  const [exerciseSearch, setExerciseSearch] = useState("");
 
+  const invalidSystem = !system || !systemDays[system];
   const selectedPlanDay = plan[selectedDay];
   
   // Progress Bar calculation based on Target Sets vs Completed Sets
@@ -179,11 +226,14 @@ function TrainingPlanContent() {
   }
 
   function updateDay(updater: (day: WorkoutDay) => WorkoutDay) {
-    savePlan(plan.map((day, index) => index === selectedDay ? updater(day) : day));
+    savePlan(plan.map((day, index) => (index === selectedDay ? updater(day) : day)));
   }
 
   function updateExercise(exerciseId: string, updater: (exercise: WorkoutExercise) => WorkoutExercise) {
-    updateDay((day) => ({ ...day, exercises: day.exercises.map((exercise) => exercise.id === exerciseId ? updater(exercise) : exercise) }));
+    updateDay((day) => ({
+      ...day,
+      exercises: day.exercises.map((exercise) => (exercise.id === exerciseId ? updater(exercise) : exercise)),
+    }));
   }
 
   function addExercise(event?: FormEvent) {
@@ -206,29 +256,31 @@ function TrainingPlanContent() {
     }));
   }
 
-  function addSelectedSuggestion() {
-    const exercise = suggestions.find(({ id }) => id === selectedSuggestion);
-    if (!exercise) return;
-    addSuggestedExercise(exercise);
-    setSelectedSuggestion("");
+  // 1-Click Muscle Routine Swap
+  function applyMusclePreset(presetName: string) {
+    const presetExercises = musclePresets[presetName];
+    if (!presetExercises) return;
+    updateDay((day) => ({
+      ...day,
+      status: "planned",
+      exercises: presetExercises.map((p) => createExercise(p.name, p.sets)),
+    }));
+    setShowSwapModal(false);
+    setSavedNotice(true);
+    window.setTimeout(() => setSavedNotice(false), 1800);
   }
 
-  function moveWeek(direction: number) {
-    setLoading(true);
-    setError("");
-    setSelectedDay(0);
-    setWeekOffset((current) => current + direction);
-  }
-
-  function openDate(event: ChangeEvent<HTMLInputElement>) {
-    const selectedDate = new Date(`${event.target.value}T00:00:00`);
-    const currentStart = getWeekStart(0);
-    const selectedStart = new Date(selectedDate);
-    selectedStart.setDate(selectedDate.getDate() - ((selectedDate.getDay() + 1) % 7));
-    const offset = Math.round((selectedStart.getTime() - currentStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
-    setLoading(true);
-    setSelectedDay((selectedDate.getDay() + 1) % 7);
-    setWeekOffset(offset);
+  function swapWithAnotherDay(targetDayIndex: number) {
+    const targetDay = plan[targetDayIndex];
+    if (!targetDay) return;
+    updateDay((day) => ({
+      ...day,
+      status: targetDay.status,
+      exercises: targetDay.exercises.map((ex) => createExercise(ex.name, ex.targetSets || ex.sets.length || 4)),
+    }));
+    setShowSwapModal(false);
+    setSavedNotice(true);
+    window.setTimeout(() => setSavedNotice(false), 1800);
   }
 
   function saveCurrentPlan() {
@@ -254,6 +306,12 @@ function TrainingPlanContent() {
     setSavedNotice(true);
     window.setTimeout(() => setSavedNotice(false), 1800);
   }
+
+  const filteredSuggestions = suggestions.filter((ex) => {
+    const matchesMuscle = muscleFilter === "الكل" || ex.muscle.includes(muscleFilter);
+    const matchesSearch = !exerciseSearch || ex.name.toLowerCase().includes(exerciseSearch.toLowerCase());
+    return matchesMuscle && matchesSearch;
+  });
 
   // 1. SYSTEM SETUP MODE
   if (mode !== "log") {
@@ -311,7 +369,16 @@ function TrainingPlanContent() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-2">
                   <strong className="text-sm font-extrabold text-white">تمارين اليوم {selectedPlanDay.day + 1}</strong>
-                  <span className="text-xs text-[#00ff88] font-bold">{selectedPlanDay.exercises.length} تمارين مضافة</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowSuggestModal(true)}
+                      className="px-2.5 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-[#00f0ff] text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles size={13} />
+                      <span>بنك التمارين المقترحة</span>
+                    </button>
+                    <span className="text-xs text-[#00ff88] font-bold">{selectedPlanDay.exercises.length} تمارين</span>
+                  </div>
                 </div>
 
                 {/* Exercises Setup List */}
@@ -390,31 +457,6 @@ function TrainingPlanContent() {
                   </div>
                 </form>
 
-                {/* Pick Suggested Exercise Dropdown */}
-                <div className="p-3.5 rounded-2xl bg-[#0e1628]/70 border border-white/5 backdrop-blur-md flex items-center gap-2">
-                  <select
-                    value={selectedSuggestion}
-                    onChange={(e) => setSelectedSuggestion(e.target.value)}
-                    disabled={suggestionsLoading}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none"
-                  >
-                    <option value="">اختار من التمارين المقترحة...</option>
-                    {suggestions.map((ex) => (
-                      <option key={ex.id} value={ex.id}>
-                        {ex.name} — ({ex.muscle})
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={addSelectedSuggestion}
-                    disabled={!selectedSuggestion}
-                    className="px-3 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-[#00f0ff] font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0 disabled:opacity-50"
-                  >
-                    <Plus size={14} />
-                    <span>إضافة المقترح</span>
-                  </button>
-                </div>
-
                 {/* Save System Plan Button */}
                 <button onClick={saveSystemPlan} className="app-primary-button mt-4 cursor-pointer">
                   <CheckCircle2 size={18} />
@@ -424,11 +466,91 @@ function TrainingPlanContent() {
             )}
           </div>
         </section>
+
+        {/* Suggested Exercises Modal (بنك التمارين المقترحة) */}
+        {showSuggestModal && (
+          <div className="fixed inset-0 z-50 bg-[#05070c]/90 backdrop-blur-xl flex items-center justify-center p-4">
+            <div className="w-full max-w-lg rounded-3xl bg-[#0e1628] border border-white/15 p-5 shadow-2xl flex flex-col max-h-[85vh]">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-[#00f0ff] flex items-center justify-center font-bold">
+                    <Sparkles size={16} />
+                  </div>
+                  <strong className="text-sm font-black text-white">بنك التمارين المقترحة</strong>
+                </div>
+                <button onClick={() => setShowSuggestModal(false)} className="text-gray-400 hover:text-white p-1">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative mb-3">
+                <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="ابحث عن اسم التمرين..."
+                  value={exerciseSearch}
+                  onChange={(e) => setExerciseSearch(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl pr-9 pl-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-[#00ff88]"
+                />
+              </div>
+
+              {/* Muscle Tabs */}
+              <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none text-xs">
+                {["الكل", "الصدر", "الظهر", "الأرجل", "الأكتاف", "البايسبس", "الترايسبس", "البطن"].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMuscleFilter(m)}
+                    className={`px-3 py-1 rounded-xl font-bold whitespace-nowrap transition-all ${
+                      muscleFilter === m
+                        ? "bg-[#00ff88] text-black shadow-[0_0_10px_rgba(0,255,136,0.3)]"
+                        : "bg-white/5 text-gray-300 hover:bg-white/10"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+
+              {/* Exercise Items List (High Contrast Text) */}
+              <div className="overflow-y-auto space-y-2 flex-1 pr-1">
+                {filteredSuggestions.length === 0 ? (
+                  <div className="text-center py-8 text-xs text-gray-400">لا توجد نتائج مطابقة</div>
+                ) : (
+                  filteredSuggestions.map((ex) => (
+                    <div
+                      key={ex.id}
+                      className="p-3 rounded-2xl bg-black/40 hover:bg-white/5 border border-white/10 flex items-center justify-between gap-3 transition-colors"
+                    >
+                      <div>
+                        <strong className="block text-sm font-extrabold text-white">{ex.name}</strong>
+                        <span className="text-[11px] font-bold text-[#00f0ff] mt-0.5 inline-block">
+                          🎯 {ex.muscle} • {ex.defaultSets ?? 4} مجموعات
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          addSuggestedExercise(ex);
+                          setSavedNotice(true);
+                          window.setTimeout(() => setSavedNotice(false), 1200);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-[#00ff88] hover:bg-[#00ff88]/90 text-black font-black text-xs flex items-center gap-1 cursor-pointer shadow-[0_0_10px_rgba(0,255,136,0.3)]"
+                      >
+                        <Plus size={14} />
+                        <span>إضافة</span>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   }
 
-  // 2. WORKOUT LOG MODE (صفحة تماريني)
+  // 2. WORKOUT LOG MODE (صفحة تماريني بالأوزان والمجاميع)
   return (
     <main className="app-shell pb-24">
       {savedNotice && (
@@ -458,12 +580,21 @@ function TrainingPlanContent() {
               <span className="screen-kicker">سجل تماريني بالأوزان</span>
               <h1 className="text-xl font-black text-white m-0 mt-0.5">{system || "جدول تمارينك"}</h1>
             </div>
-            <Link
-              href={`/training-plan?system=${encodeURIComponent(system)}&mode=setup`}
-              className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gray-300 transition-colors"
-            >
-              تعديل النظام
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowSwapModal(true)}
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RefreshCw size={13} />
+                <span>تبديل تمرينة اليوم</span>
+              </button>
+              <Link
+                href={`/training-plan?system=${encodeURIComponent(system)}&mode=setup`}
+                className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gray-300 transition-colors"
+              >
+                تعديل النظام
+              </Link>
+            </div>
           </div>
 
           {/* Days Carousel Tabs (Opens on Today's Day) */}
@@ -523,10 +654,22 @@ function TrainingPlanContent() {
           {selectedPlanDay?.status === "skipped" ? (
             <div className="p-8 text-center rounded-2xl bg-white/5 border border-white/10 text-gray-400">
               <p className="m-0 text-sm">تم تحديد هذا اليوم كـ "لم أتمرن"</p>
+              <button
+                onClick={() => updateDay((day) => ({ ...day, status: "planned" }))}
+                className="mt-3 px-3 py-1.5 rounded-xl bg-[#00ff88] text-black font-bold text-xs cursor-pointer"
+              >
+                تفعيل التمرين اليوم
+              </button>
             </div>
           ) : selectedPlanDay?.status === "rest" ? (
             <div className="p-8 text-center rounded-2xl bg-white/5 border border-white/10 text-gray-400">
               <p className="m-0 text-sm">يوم راحة واستشفاء عضلي 🧘</p>
+              <button
+                onClick={() => setShowSwapModal(true)}
+                className="mt-3 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs cursor-pointer"
+              >
+                تبديل لتمرين عضلة أخرى
+              </button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -653,6 +796,72 @@ function TrainingPlanContent() {
           )}
         </div>
       </section>
+
+      {/* Swap Today's Workout Focus Modal (تبديل تمرينة اليوم) */}
+      {showSwapModal && (
+        <div className="fixed inset-0 z-50 bg-[#05070c]/90 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-3xl bg-[#0e1628] border border-white/15 p-5 shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                  <RefreshCw size={16} />
+                </div>
+                <strong className="text-sm font-black text-white">تبديل تمرينة اليوم ({weekDays[selectedDay]?.label})</strong>
+              </div>
+              <button onClick={() => setShowSwapModal(false)} className="text-gray-400 hover:text-white p-1">
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-400 mb-3">
+              هل ترغب في تغيير عضلة اليوم؟ اختر أي مجموعة عضلية وسيقوم التطبيق بتحميل تمارينها فوراً في هذا اليوم:
+            </p>
+
+            <div className="overflow-y-auto space-y-2 flex-1 pr-1">
+              <span className="text-[11px] font-bold text-gray-300 block mb-1">1. اختر عضلة بديلة لليوم:</span>
+              {Object.keys(musclePresets).map((presetKey) => (
+                <button
+                  key={presetKey}
+                  onClick={() => applyMusclePreset(presetKey)}
+                  className="w-full p-3 rounded-2xl bg-black/40 hover:bg-[#00ff88]/10 border border-white/10 hover:border-[#00ff88]/40 flex items-center justify-between text-right transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/5 group-hover:bg-[#00ff88]/20 flex items-center justify-center text-white group-hover:text-[#00ff88]">
+                      <Dumbbell size={16} />
+                    </div>
+                    <div>
+                      <strong className="text-xs font-bold text-white block">{presetKey}</strong>
+                      <span className="text-[10px] text-gray-400">
+                        {musclePresets[presetKey].length} تمارين مجهزة بالمجموعات
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-[#00ff88] group-hover:translate-x-[-2px] transition-transform">
+                    تطبيق اليوم ⬅️
+                  </span>
+                </button>
+              ))}
+
+              <span className="text-[11px] font-bold text-gray-300 block mt-4 mb-1">2. أو انسخ تمارين يوم آخر من جدولك:</span>
+              <div className="grid grid-cols-2 gap-2">
+                {plan.map((day) => {
+                  if (day.day === selectedDay) return null;
+                  return (
+                    <button
+                      key={day.day}
+                      onClick={() => swapWithAnotherDay(day.day)}
+                      className="p-2.5 rounded-xl bg-black/40 hover:bg-cyan-500/10 border border-white/10 hover:border-cyan-500/30 text-right transition-colors cursor-pointer"
+                    >
+                      <span className="text-xs font-bold text-white block">اليوم {day.day + 1}</span>
+                      <span className="text-[10px] text-gray-400">{day.exercises.length} تمارين مضافة</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

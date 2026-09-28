@@ -35,17 +35,23 @@ export function AuthScreen({ onClose }: AuthScreenProps) {
       const nameVal = String(formData.get("name") || emailVal.split("@")[0] || "المتدرب");
       const ageVal = formData.get("age") ? Number(formData.get("age")) : null;
 
+      let existingAvatar = "";
+      const existing = localStorage.getItem("gym-user-profile");
+      if (existing) {
+        try {
+          const parsed = JSON.parse(existing);
+          if (parsed.avatar) existingAvatar = parsed.avatar;
+        } catch {}
+      }
+
       const userProfile = {
         name: nameVal,
         email: emailVal,
         age: ageVal,
-        avatar: "",
+        avatar: existingAvatar,
       };
 
-      const existing = localStorage.getItem("gym-user-profile");
-      if (!existing || isSignup) {
-        localStorage.setItem("gym-user-profile", JSON.stringify(userProfile));
-      }
+      localStorage.setItem("gym-user-profile", JSON.stringify(userProfile));
 
       await fetch(`/api/auth/${isSignup ? "register" : "login"}`, {
         method: "POST",
